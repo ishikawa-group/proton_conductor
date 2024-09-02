@@ -1,24 +1,20 @@
-import os 
+import argparse
 # os.environ['OPENBLAS_NUM_THREADS'] = '1'  # if openblas error happens, uncomment this
 import math
-import subprocess
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-import argparse
 import numpy as np
-from fairchem.core.models.model_registry import model_name_to_local_file
-from ase import Atom, Atoms
-from ase.io import read, write, Trajectory
-from ase.visualize import view
-from ase.optimize import BFGS
-from ase.calculators.emt import EMT
-from ase.md.langevin import Langevin
-from ase.md.nvtberendsen import NVTBerendsen
-from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+import statsmodels.api as sm
+import subprocess
+from ase import Atom
 from ase import units
-from ase.constraints import FixAtoms
-from ase.visualize.plot import plot_atoms
+# from ase.calculators.emt import EMT
+from ase.io import read
+from ase.io import write
+from ase.md.langevin import Langevin
+# from ase.md.nvtberendsen import NVTBerendsen
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from fairchem.core.common.relaxation.ase_utils import OCPCalculator
+# from fairchem.core.models.model_registry import model_name_to_local_file
 
 # --- when using non-fine-tuned NNP
 # model_name = "PaiNN-S2EF-OC20-All"
@@ -126,4 +122,3 @@ if show_plot:
     plt.show()
 
 subprocess.run("rm tmp.traj md.log", shell=True)
-

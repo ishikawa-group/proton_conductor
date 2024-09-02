@@ -1,21 +1,15 @@
-from fairchem.core.preprocessing import AtomsToGraphs
-from fairchem.core.datasets import LmdbDataset
-from ase.io import read
-from ase.build import bulk
-from ase.build import fcc100, add_adsorbate, molecule
-from ase.constraints import FixAtoms
-from ase.calculators.emt import EMT
-from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
-from ase.md.verlet import VelocityVerlet
-from ase import units
-import matplotlib.pyplot as plt
 import lmdb
-import pickle
-from tqdm import tqdm
-import torch
 import os
+import pickle
 import subprocess
-from ase.visualize import view
+import torch
+# from ase.calculators.emt import EMT
+from ase.io import read
+# from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+# from ase.md.verlet import VelocityVerlet
+from fairchem.core.datasets import LmdbDataset
+from fairchem.core.preprocessing import AtomsToGraphs
+from tqdm import tqdm
 
 # --- read from VASP OUTCAR
 outcar_name = "OUTCAR"
@@ -59,7 +53,7 @@ for fid, data in tqdm(enumerate(data_objects), total=len(data_objects)):
 
     # no neighbor edge case check
     if data.edge_index.shape[1] == 0:
-        print("no neighbors", traj_path)
+        print("no neighbors")
         continue
 
     txn = db.begin(write=True)
@@ -67,7 +61,7 @@ for fid, data in tqdm(enumerate(data_objects), total=len(data_objects)):
     txn.commit()
 
 txn = db.begin(write=True)
-txn.put(f"length".encode("ascii"), pickle.dumps(len(data_objects), protocol=-1))
+txn.put("length".encode("ascii"), pickle.dumps(len(data_objects), protocol=-1))
 txn.commit()
 
 db.sync()
@@ -87,4 +81,3 @@ for idir in [train_dir, val_dir]:
 
 subprocess.run(f"cp {dataset_name} {train_dir}", shell=True)
 subprocess.run(f"cp {dataset_name} {val_dir}", shell=True)
-

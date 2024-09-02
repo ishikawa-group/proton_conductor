@@ -1,4 +1,4 @@
-from ase import Atom, Atoms
+from ase import Atom
 from ase.io import read, write
 from ase.build import sort
 
@@ -31,4 +31,3 @@ bulk.append(Atom("H", position=[xpos, 0, 0]))
 bulk = replace_element(bulk, from_element="Zr", to_element="Y", percent_replace=0)
 
 write("POSCAR", bulk)
-

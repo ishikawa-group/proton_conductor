@@ -1,10 +1,11 @@
 # Proton diffusion in solid oxide
 * In this example, the proton diffusion problem is investigated with NNP.
+* The NNP provided by fairchem (prevoiusly OpenCatalyst Project) was used.
 * The steps are as follows:
-1. Prepare the training data with DFT: VASP (not in this repository)
-2. Make LMDB file from DFT output: [make_lmdb_from_outcar.py](./make_lmdb_from_outcar.py)
-3. Prepare the pre-trained NNP model and do fine-tuning: [finetuning.py](./finetuning.py)
-4. Use fine-tuned NNP to the diffusion problem: [diffusion.py](./diffusion.py)
+  1. Prepare the training data with DFT: VASP (not in this repository)
+  2. Make LMDB file from DFT output: [make_lmdb_from_outcar.py](./make_lmdb_from_outcar.py)
+  3. Prepare the pre-trained NNP model and do fine-tuning: [finetuning.py](./finetuning.py)
+  4. Use fine-tuned NNP to the diffusion problem: [diffusion.py](./diffusion.py)
 
 ## 1. Prepare the training data
 * The pre-trained NNP model is fine-tuned with the DFT program.

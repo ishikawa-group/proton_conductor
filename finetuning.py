@@ -1,18 +1,13 @@
 import os
-# os.environ['OPENBLAS_NUM_THREADS'] = '1'  # if openblas error happens, uncomment this
-from fairchem.core.models import model_name_to_local_file
-from fairchem.core.common.relaxation.ase_utils import OCPCalculator
-from ase import Atoms
-from ase.db import connect
-from ase.calculators.singlepoint import SinglePointCalculator
-from fairchem.core.common.tutorial_utils import train_test_val_split
-from fairchem.core.common.tutorial_utils import generate_yml_config
-from fairchem.core.common.tutorial_utils import fairchem_main
-import os
 import subprocess
 import time
-import json
-import matplotlib.pyplot as plt
+# from ase.calculators.singlepoint import SinglePointCalculator
+# from fairchem.core.common.relaxation.ase_utils import OCPCalculator
+# from fairchem.core.common.tutorial_utils import fairchem_main
+from fairchem.core.common.tutorial_utils import generate_yml_config
+from fairchem.core.common.tutorial_utils import train_test_val_split
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'  # if openblas error happens, uncomment this
+from fairchem.core.models import model_name_to_local_file
 
 # when clean checkpoint file
 subprocess.run("rm -rf ./checkpoints/*", shell=True)
@@ -22,7 +17,7 @@ pretrained_model = "PaiNN-S2EF-OC20-All"
 # pretrained_model = "GemNet-OC-S2EFS-OC20+OC22"  # takes time
 # pretrained_model = "GemNet-OC-S2EFS-OC22"
 
-checkpoint_path = model_name_to_local_file(model_name=pretrained_model, local_cache="../pretrained_checkpoints")
+checkpoint = model_name_to_local_file(model_name=pretrained_model, local_cache="../pretrained_checkpoints")
 
 use_asedb = True  # when using ASE database
 
@@ -34,7 +29,7 @@ yml = "config.yml"
 subprocess.run(["rm", yml])
 
 # --- training and validation data are always necessary!
-generate_yml_config(checkpoint_path=checkpoint_path, yml=yml,
+generate_yml_config(checkpoint_path=checkpoint, yml=yml,
                     delete=["slurm", "cmd", "logger", "task",
                             "dataset", "test_dataset", "val_dataset"],
                     update={"gpus": 0,
@@ -45,7 +40,7 @@ generate_yml_config(checkpoint_path=checkpoint_path, yml=yml,
                             "task.dataset": "ase_db",
                             # "task.dataset": "lmdb",
                             "optim.eval_every": 1,
-                            "optim.max_epochs": 2,  #  10,
+                            "optim.max_epochs": 2,  # 10,
                             "optim.num_workers": 0,
                             "optim.batch_size": 10,  # number of samples in one batch ... 10 is better than 20
 
@@ -70,7 +65,7 @@ generate_yml_config(checkpoint_path=checkpoint_path, yml=yml,
 print(f"config yaml file seved to {yml}.")
 
 t0 = time.time()
-subprocess.run(f"python ../main.py --mode train --config-yml {yml} --checkpoint {checkpoint_path} &> train.txt", shell=True)
+subprocess.run(f"python ../main.py --mode train --config-yml {yml} --checkpoint {checkpoint} &> train.txt", shell=True)
 print(f"Elapsed time = {time.time() - t0:1.1f} seconds")
 
 cpline  = subprocess.check_output(["grep", "checkpoint_dir", "train.txt"])
@@ -78,4 +73,3 @@ cpdir   = cpline.decode().strip().replace(" ", "").split(":")[-1]
 newchk  = cpdir + "/checkpoint.pt"
 
 print(f"new checkpoint: {os.path.abspath(newchk)}")
-

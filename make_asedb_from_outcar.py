@@ -1,5 +1,5 @@
-from ase.io import read
 import ase.db
+from ase.io import read
 
 bulk = read("OUTCAR", index=":")
 dbname = "bulk.db"
