@@ -7,7 +7,6 @@ import statsmodels.api as sm
 import subprocess
 from ase import Atom
 from ase import units
-# from ase.calculators.emt import EMT
 from ase.io import read
 from ase.io import write
 from ase.md.langevin import Langevin
@@ -21,23 +20,32 @@ from fairchem.core.common.relaxation.ase_utils import OCPCalculator
 # checkpoint_path = model_name_to_local_file(model_name=model_name, local_cache="../checkpoints")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--maxtime_ps", default=1)
+parser.add_argument("--maxtime_ps", default=1.0)
 parser.add_argument("--show_plot", action="store_true")
+parser.add_argument("--trajectory_file", default="test.traj")
+parser.add_argument("--temperature_K", default=1000)
+parser.add_argument("--timestep", default=1.0)
+
 args = parser.parse_args()
 
 maxtime_ps = float(args.maxtime_ps)
 show_plot = args.show_plot
+traj_name = args.trajectory_file
+temperature_K = float(args.temperature_K)
+timestep = float(args.timestep*units.fs)
 
 cpline  = subprocess.check_output(["grep", "checkpoint_dir", "train.txt"])
 cpdir   = cpline.decode().strip().replace(" ", "").split(":")[-1]
 # checkpoint_path = cpdir + "/checkpoint.pt"
 checkpoint_path = cpdir + "/best_checkpoint.pt"
 
+subprocess.run("rm ./md.log", shell=True)  # delete old log file
+
 calc = OCPCalculator(checkpoint_path=checkpoint_path, cpu=False)
 
 bulk = read("BaZrO3.cif")
 ###
-replicate_size = 6  # 10 is out of memory. 8 - 1hours
+replicate_size = 2  # 8
 each = 10  # step to save trajectory
 ###
 replicate = [replicate_size]*3
@@ -58,11 +66,8 @@ bulk.calc = calc
 tags = np.ones(len(bulk))
 bulk.set_tags(tags)
 
-traj_name = "test.traj"
-temperature_K = 1000
-timestep = 1.0*units.fs  # in fs. Use 1 or 0.5 fs.
 t0 = 0.1  # starting time for taking MSD [ps].
-loginterval = 10
+loginterval = 10  # interval to write trajectory file [steps].
 
 maxtime_ps = maxtime_ps + t0  # extend maxtime_ps as we discard the initial t0 ps
 

@@ -42,14 +42,9 @@ tags = raw_data[0].get_tags()
 data_objects = a2g.convert_all(raw_data, disable_tqdm=True)
 
 for fid, data in tqdm(enumerate(data_objects), total=len(data_objects)):
-    # assign sid
-    data.sid = torch.LongTensor([0])
-
-    # assign fid
-    data.fid = torch.LongTensor([fid])
-
-    # assign tags, if available
-    data.tags = torch.LongTensor(tags)
+    data.sid = torch.LongTensor([0])    # assign sid
+    data.fid = torch.LongTensor([fid])  # assign fid
+    data.tags = torch.LongTensor(tags)  # assign tags, if available
 
     # no neighbor edge case check
     if data.edge_index.shape[1] == 0:

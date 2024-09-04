@@ -1,8 +1,6 @@
 import os
 import subprocess
 import time
-# from ase.calculators.singlepoint import SinglePointCalculator
-# from fairchem.core.common.relaxation.ase_utils import OCPCalculator
 # from fairchem.core.common.tutorial_utils import fairchem_main
 from fairchem.core.common.tutorial_utils import generate_yml_config
 from fairchem.core.common.tutorial_utils import train_test_val_split
@@ -17,55 +15,55 @@ pretrained_model = "PaiNN-S2EF-OC20-All"
 # pretrained_model = "GemNet-OC-S2EFS-OC20+OC22"  # takes time
 # pretrained_model = "GemNet-OC-S2EFS-OC22"
 
-checkpoint = model_name_to_local_file(model_name=pretrained_model, local_cache="../pretrained_checkpoints")
+checkpoint_path = model_name_to_local_file(model_name=pretrained_model, local_cache="../pretrained_checkpoints")
 
-use_asedb = True  # when using ASE database
+use_asedb = False  # when using ASE database
+
+update = {"gpus": 0,
+          "trainer": "ocp",
+
+          "optim.eval_every": 1,
+          "optim.max_epochs": 1,  # 10,
+          "optim.num_workers": 0,
+          "optim.batch_size": 40,  # Number of samples in one batch. Smaller is accurate but takes time. Max is data/5.
+
+          "logger": "tensorboard",
+
+          "dataset.train.a2g_args.r_energy": True,
+          "dataset.train.a2g_args.r_forces": True,
+
+          "dataset.val.a2g_args.r_energy": True,
+          "dataset.val.a2g_args.r_forces": True,
+          }
 
 if use_asedb:
     subprocess.run("rm -rf train.db test.db val.db *.db.lock", shell=True)
     train, test, val = train_test_val_split("bulk.db")  # when using ASE database
+    update.update({"task.dataset": "ase_db"})
+    update.update({"dataset.train.src": "train.db"})
+    update.update({"dataset.test.src": "test.db"})
+    update.update({"dataset.test.a2g_args.r_energy": False})
+    update.update({"dataset.test.a2g_args.r_forces": False})
+    update.update({"dataset.val.src": "val.db"})
+else:
+    update.update({"task.dataset": "lmdb"})
+    update.update({"dataset.train.src": "../data/s2ef/mytrain"})
+    update.update({"dataset.val.src": "../data/s2ef/myval"})
 
 yml = "config.yml"
 subprocess.run(["rm", yml])
 
 # --- training and validation data are always necessary!
-generate_yml_config(checkpoint_path=checkpoint, yml=yml,
-                    delete=["slurm", "cmd", "logger", "task",
-                            "dataset", "test_dataset", "val_dataset"],
-                    update={"gpus": 0,
-                            "trainer": "ocp",
+delete = ["slurm", "cmd", "logger", "task", "dataset", "test_dataset", "val_dataset"]
 
-                            # "eval_metrics.primary_metric": "forces_mae",
-
-                            "task.dataset": "ase_db",
-                            # "task.dataset": "lmdb",
-                            "optim.eval_every": 1,
-                            "optim.max_epochs": 2,  # 10,
-                            "optim.num_workers": 0,
-                            "optim.batch_size": 10,  # number of samples in one batch ... 10 is better than 20
-
-                            "logger": "tensorboard",
-
-                            "dataset.train.src": "train.db",
-                            # "dataset.train.src": "../data/s2ef/mytrain",
-                            "dataset.train.a2g_args.r_energy": True,
-                            "dataset.train.a2g_args.r_forces": True,
-
-                            "dataset.test.src": "test.db",
-                            "dataset.test.a2g_args.r_energy": False,
-                            "dataset.test.a2g_args.r_forces": False,
-
-                            "dataset.val.src": "val.db",
-                            # "dataset.val.src": "../data/s2ef/myval",
-                            "dataset.val.a2g_args.r_energy": True,
-                            "dataset.val.a2g_args.r_forces": True,
-                            }
-                    )
+generate_yml_config(checkpoint_path=checkpoint_path, yml=yml, delete=delete, update=update)
 
 print(f"config yaml file seved to {yml}.")
 
 t0 = time.time()
-subprocess.run(f"python ../main.py --mode train --config-yml {yml} --checkpoint {checkpoint} &> train.txt", shell=True)
+subprocess.run(f"python ./fairchem_main.py --mode train --config-yml {yml} --checkpoint {checkpoint_path}"
+               f"&> train.txt", shell=True)
+
 print(f"Elapsed time = {time.time() - t0:1.1f} seconds")
 
 cpline  = subprocess.check_output(["grep", "checkpoint_dir", "train.txt"])
