@@ -25,6 +25,8 @@ parser.add_argument("--show_plot", action="store_true")
 parser.add_argument("--trajectory_file", default="test.traj")
 parser.add_argument("--temperature_K", default=1000)
 parser.add_argument("--timestep", default=1.0)
+parser.add_argument("--cif_file", default="BaZrO3.cif")
+parser.add_argument("--replicate_size", default=2)
 
 args = parser.parse_args()
 
@@ -33,6 +35,8 @@ show_plot = args.show_plot
 traj_name = args.trajectory_file
 temperature_K = float(args.temperature_K)
 timestep = float(args.timestep*units.fs)
+cif_file = args.cif_file
+replicate_size = int(args.replicate_size)
 
 cpline  = subprocess.check_output(["grep", "checkpoint_dir", "train.txt"])
 cpdir   = cpline.decode().strip().replace(" ", "").split(":")[-1]
@@ -41,43 +45,38 @@ checkpoint_path = cpdir + "/best_checkpoint.pt"
 
 subprocess.run("rm ./md.log", shell=True)  # delete old log file
 
-calc = OCPCalculator(checkpoint_path=checkpoint_path, cpu=False)
-
-bulk = read("BaZrO3.cif")
-###
-replicate_size = 2  # 8
-each = 10  # step to save trajectory
-###
+bulk = read(cif_file)
 replicate = [replicate_size]*3
 bulk = bulk*replicate
 cell_length = bulk.cell.cellpar()
-pos = 0.5 * cell_length[0] / replicate_size
+pos = cell_length[0]
 
 # put hydrogen
-bulk.append(Atom("H", position=[  pos,     0,     0]))
-bulk.append(Atom("H", position=[3*pos, 2*pos,     0]))
-bulk.append(Atom("H", position=[    0, 3*pos, 2*pos]))
-bulk.append(Atom("H", position=[5*pos,     0,     0]))
-bulk.append(Atom("H", position=[8*pos, 7*pos,     0]))
-bulk.append(Atom("H", position=[    0, 8*pos, 7*pos]))
+bulk.append(Atom("H", position=[0.25*pos, 0, 0]))
+bulk.append(Atom("H", position=[0, 0, 0.75*pos]))
 
+# set calculator
+calc = OCPCalculator(checkpoint_path=checkpoint_path, cpu=False)
 bulk.calc = calc
 
+# set tags
 tags = np.ones(len(bulk))
 bulk.set_tags(tags)
 
+# set parameters for MD
 t0 = 0.1  # starting time for taking MSD [ps].
 loginterval = 10  # interval to write trajectory file [steps].
-
+each = 10  # step to save trajectory
 maxtime_ps = maxtime_ps + t0  # extend maxtime_ps as we discard the initial t0 ps
 
 steps   = math.ceil(maxtime_ps/(timestep*1e-3))
 t0steps = math.ceil(t0/(timestep*1e-3))
 
-print(f"Temperature [K]: {temperature_K}", flush=True)
-print(f"Maximum time [ps]: {maxtime_ps} (discard initial {t0} [ps])", flush=True)
+print(f"Temperature [K]: {temperature_K:5.2f}", flush=True)
+print(f"Maximum time [ps]: {maxtime_ps:5.2f} (discard initial {t0} [ps])", flush=True)
 print(f"Number of steps: {steps} (calculate), {int(steps/loginterval)} (write to trajectory)", flush=True)
 
+# run the MD calculation
 MaxwellBoltzmannDistribution(bulk, temperature_K=temperature_K)
 dyn = Langevin(bulk, timestep=timestep, temperature_K=temperature_K, friction=0.01/units.fs,
                trajectory="tmp.traj", logfile="md.log", loginterval=loginterval)  # friction: 0.01-0.1
