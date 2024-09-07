@@ -1,0 +1,16 @@
+checkpoints/
+downloaded_checkpoints/
+results/
+logs/
+
+POSCAR
+tmp.*
+train.txt
+out*.txt
+*.db
+*.pt
+*.traj
+*.log
+*.lmdb
+*.e[0-9]*
+*.o[0-9]*
