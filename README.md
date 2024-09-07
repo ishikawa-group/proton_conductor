@@ -1,2 +1,2 @@
-# Proton diffusion in solid oxide
-* In this example, the proton diffusion problem is investigated with NNP.
+# proton_conductor
+* This is a library for searching the proton conductor.
