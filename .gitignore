@@ -4,6 +4,7 @@ results/
 logs/
 
 POSCAR
+OUTCAR
 tmp.*
 train.txt
 out*.txt
