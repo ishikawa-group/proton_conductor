@@ -10,6 +10,7 @@ from ase import units
 from ase.io import read
 from ase.io import write
 from ase.md.langevin import Langevin
+from ase.visualize import view
 # from ase.md.nvtberendsen import NVTBerendsen
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from fairchem.core.common.relaxation.ase_utils import OCPCalculator
@@ -26,7 +27,7 @@ parser.add_argument("--trajectory_file", default="test.traj")
 parser.add_argument("--temperature_K", default=1000)
 parser.add_argument("--timestep", default=1.0)
 parser.add_argument("--cif_file", default="BaZrO3.cif")
-parser.add_argument("--replicate_size", default=2)
+parser.add_argument("--replicate_size", default=1)
 
 args = parser.parse_args()
 
@@ -52,8 +53,8 @@ cell_length = bulk.cell.cellpar()
 pos = cell_length[0]
 
 # put hydrogen
-bulk.append(Atom("H", position=[0.25*pos, 0, 0]))
-bulk.append(Atom("H", position=[0, 0, 0.75*pos]))
+#bulk.append(Atom("H", position=[0.25*pos, 0, 0]))
+#bulk.append(Atom("H", position=[0, 0, 0.75*pos]))
 
 # set calculator
 calc = OCPCalculator(checkpoint_path=checkpoint_path, cpu=False)
@@ -64,9 +65,9 @@ tags = np.ones(len(bulk))
 bulk.set_tags(tags)
 
 # set parameters for MD
-t0 = 0.1  # starting time for taking MSD [ps].
-loginterval = 10  # interval to write trajectory file [steps].
-each = 10  # step to save trajectory
+t0 = 0.01  # starting time for taking MSD [ps].
+loginterval = 1  # interval to write trajectory file [steps].
+each = loginterval  # step to save trajectory
 maxtime_ps = maxtime_ps + t0  # extend maxtime_ps as we discard the initial t0 ps
 
 steps   = math.ceil(maxtime_ps/(timestep*1e-3))
